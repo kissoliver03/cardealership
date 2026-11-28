@@ -2,14 +2,14 @@ package hu.mik.pte.prog5.carmanager.views.layout;
 
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.RouterLayout;
-import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import hu.mik.pte.prog5.carmanager.views.CarListView;
 import hu.mik.pte.prog5.carmanager.views.RentalListView;
@@ -31,21 +31,18 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
     }
 
     private Header createHeader() {
-        H2 title = new H2(new RouterLink(getTranslation("app.title"), CarListView.class));
-        title.getStyle().set("margin", "0");
+        Span title = new Span(getTranslation("app.title"));
+        title.getStyle()
+                .set("font-size", "1.25rem")
+                .set("font-weight", "600")
+                .set("color", "var(--lumo-primary-text-color)")
+                .set("cursor", "pointer")
+                .set("white-space", "nowrap")
+                .set("margin-right", "1.5rem");
+        title.addClickListener(e -> UI.getCurrent().navigate(CarListView.class));
 
-        RouterLink carsLink = new RouterLink(getTranslation("nav.cars"), CarListView.class);
-        carsLink.getStyle().set("font-weight", "500").set("text-decoration", "none").set("color", "inherit");
-
-        RouterLink rentalsLink = new RouterLink(getTranslation("nav.rentals"), RentalListView.class);
-        rentalsLink.getStyle().set("font-weight", "500").set("text-decoration", "none").set("color", "inherit");
-
-        HorizontalLayout navigation = new HorizontalLayout(carsLink, rentalsLink);
-        navigation.setSpacing(true);
-        navigation.getStyle().set("margin-left", "2rem");
-
-        HorizontalLayout leftSection = new HorizontalLayout(title, navigation);
-        leftSection.setAlignItems(Alignment.CENTER);
+        Button carsButton = new Button(getTranslation("nav.cars"), e -> UI.getCurrent().navigate(CarListView.class));
+        Button rentalsButton = new Button(getTranslation("nav.rentals"), e -> UI.getCurrent().navigate(RentalListView.class));
 
         Select<Locale> language = new Select<>();
         language.setItems(Locale.of("hu"), Locale.of("en"));
@@ -66,12 +63,16 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
             }
         });
 
-        HorizontalLayout bar = new HorizontalLayout(leftSection, language);
+        Div spacer = new Div();
+
+        HorizontalLayout bar = new HorizontalLayout(title, carsButton, rentalsButton, spacer, language);
         bar.setWidthFull();
         bar.setAlignItems(Alignment.CENTER);
-        bar.expand(leftSection);
-        bar.getStyle().set("padding", "1rem 0");
-        bar.getStyle().set("border-bottom", "1px solid #e0e0e0");
+        bar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        bar.setFlexGrow(1, spacer);
+        bar.getStyle()
+                .set("padding", "0.75rem 0")
+                .set("border-bottom", "1px solid var(--lumo-contrast-10pct)");
 
         Header header = new Header(bar);
         header.setWidthFull();
