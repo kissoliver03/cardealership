@@ -48,11 +48,11 @@ public class CarListView extends VerticalLayout implements HasDynamicTitle {
                 .setHeader(getTranslation("car.makeModel"))
                 .setAutoWidth(true);
 
-        this.grid.addColumn(Car::getCategoryName)
+        this.grid.addColumn(this::formatCategoryName)
                 .setHeader(getTranslation("car.category"))
                 .setAutoWidth(true);
 
-        this.grid.addColumn(car -> car.getDailyFee() != null ? car.getDailyFee() + " Ft" : "-")
+        this.grid.addColumn(car -> car.getDailyFee() != null ? car.getDailyFee() + " " + getTranslation("app.currency") : "-")
                 .setHeader(getTranslation("car.dailyFee"))
                 .setAutoWidth(true);
 
@@ -118,6 +118,15 @@ public class CarListView extends VerticalLayout implements HasDynamicTitle {
 
     private void refresh() {
         this.grid.setItems(this.carService.list());
+    }
+
+    private String formatCategoryName(Car car) {
+        if (car == null || car.getCategoryName() == null) {
+            return "-";
+        }
+        String key = "category.type." + car.getCategoryName();
+        String translation = getTranslation(key);
+        return translation.startsWith("!") ? car.getCategoryName() : translation;
     }
 
     @Override

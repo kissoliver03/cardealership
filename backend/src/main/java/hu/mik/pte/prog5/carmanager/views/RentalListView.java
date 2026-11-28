@@ -56,7 +56,7 @@ public class RentalListView extends VerticalLayout implements HasDynamicTitle {
                 .setHeader(getTranslation("rental.returnDate")).setAutoWidth(true);
 
         this.grid.addColumn(rental -> rental.getRentalFee() != null ?
-                String.format("%,.0f Ft", rental.getRentalFee()) : "-")
+                String.format("%,.0f %s", rental.getRentalFee(), getTranslation("app.currency")) : "-")
                 .setHeader(getTranslation("rental.fee")).setAutoWidth(true);
 
         this.grid.addComponentColumn(this::createStatusBadge)

@@ -60,7 +60,14 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver, 
 
         List<Category> categories = categoryService.list();
         categoryBox.setItems(categories);
-        categoryBox.setItemLabelGenerator(cat -> cat.getCategoryName() + " (" + cat.getDailyFee() + " Ft/nap)");
+        categoryBox.setItemLabelGenerator(cat -> {
+            String key = "category.type." + cat.getCategoryName();
+            String name = getTranslation(key);
+            if (name.startsWith("!")) {
+                name = cat.getCategoryName();
+            }
+            return name + " (" + cat.getDailyFee() + " " + getTranslation("app.dailyFeeUnit") + ")";
+        });
 
         statusSelect.setItems(CarStatus.values());
         statusSelect.setItemLabelGenerator(status -> getTranslation("status." + status.name()));

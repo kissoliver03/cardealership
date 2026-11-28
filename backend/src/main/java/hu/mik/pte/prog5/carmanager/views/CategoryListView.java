@@ -44,11 +44,11 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
                 .setAutoWidth(true)
                 .setFlexGrow(0);
 
-        this.grid.addColumn(Category::getCategoryName)
+        this.grid.addColumn(this::formatCategoryName)
                 .setHeader(getTranslation("category.name"))
                 .setAutoWidth(true);
 
-        this.grid.addColumn(category -> category.getDailyFee() != null ? category.getDailyFee() + " Ft/nap" : "-")
+        this.grid.addColumn(category -> category.getDailyFee() != null ? category.getDailyFee() + " " + getTranslation("app.dailyFeeUnit") : "-")
                 .setHeader(getTranslation("category.dailyFee"))
                 .setAutoWidth(true);
 
@@ -112,6 +112,15 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
 
     private void refresh() {
         this.grid.setItems(this.categoryService.list());
+    }
+
+    private String formatCategoryName(Category category) {
+        if (category == null || category.getCategoryName() == null) {
+            return "-";
+        }
+        String key = "category.type." + category.getCategoryName();
+        String translation = getTranslation(key);
+        return translation.startsWith("!") ? category.getCategoryName() : translation;
     }
 
     @Override
