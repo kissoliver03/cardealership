@@ -20,8 +20,8 @@ import com.vaadin.flow.router.RouteAlias;
 import hu.mik.pte.prog5.carmanager.model.Car;
 import hu.mik.pte.prog5.carmanager.model.CarStatus;
 import hu.mik.pte.prog5.carmanager.model.Category;
-import hu.mik.pte.prog5.carmanager.repository.CategoryRepository;
 import hu.mik.pte.prog5.carmanager.service.CarService;
+import hu.mik.pte.prog5.carmanager.service.CategoryService;
 import hu.mik.pte.prog5.carmanager.views.layout.MainLayout;
 
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.List;
 public class CarFormView extends VerticalLayout implements BeforeEnterObserver, HasDynamicTitle {
 
     private final CarService carService;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     private final BeanValidationBinder<Car> binder = new BeanValidationBinder<>(Car.class);
     private Car car;
@@ -44,9 +44,9 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver, 
     private final IntegerField mileage = new IntegerField();
     private final Select<CarStatus> statusSelect = new Select<>();
 
-    public CarFormView(CarService carService, CategoryRepository categoryRepository) {
+    public CarFormView(CarService carService, CategoryService categoryService) {
         this.carService = carService;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
 
         this.setMaxWidth("600px");
         this.getStyle().set("margin", "0 auto");
@@ -58,7 +58,7 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver, 
         mileage.setLabel(getTranslation("car.form.mileage"));
         statusSelect.setLabel(getTranslation("car.form.status"));
 
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = categoryService.list();
         categoryBox.setItems(categories);
         categoryBox.setItemLabelGenerator(cat -> cat.getCategoryName() + " (" + cat.getDailyFee() + " Ft/nap)");
 

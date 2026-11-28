@@ -12,6 +12,7 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.RouterLayout;
 import com.vaadin.flow.server.VaadinSession;
 import hu.mik.pte.prog5.carmanager.views.CarListView;
+import hu.mik.pte.prog5.carmanager.views.CategoryListView;
 import hu.mik.pte.prog5.carmanager.views.RentalListView;
 
 import java.util.Locale;
@@ -43,6 +44,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
 
         Button carsButton = new Button(getTranslation("nav.cars"), e -> UI.getCurrent().navigate(CarListView.class));
         Button rentalsButton = new Button(getTranslation("nav.rentals"), e -> UI.getCurrent().navigate(RentalListView.class));
+        Button categoriesButton = new Button(getTranslation("nav.categories"), e -> UI.getCurrent().navigate(CategoryListView.class));
 
         Select<Locale> language = new Select<>();
         language.setItems(Locale.of("hu"), Locale.of("en"));
@@ -65,7 +67,7 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
 
         Div spacer = new Div();
 
-        HorizontalLayout bar = new HorizontalLayout(title, carsButton, rentalsButton, spacer, language);
+        HorizontalLayout bar = new HorizontalLayout(title, carsButton, rentalsButton, categoriesButton, spacer, language);
         bar.setWidthFull();
         bar.setAlignItems(Alignment.CENTER);
         bar.setDefaultVerticalComponentAlignment(Alignment.CENTER);
