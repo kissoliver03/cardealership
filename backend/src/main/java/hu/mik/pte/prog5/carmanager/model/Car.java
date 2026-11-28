@@ -110,7 +110,6 @@ public class Car {
         this.status = status;
     }
 
-    // Kényelmi getterek a Vaadin Gridhez és REST DTO-khoz
     public String getCategoryName() {
         return category != null ? category.getCategoryName() : "";
     }

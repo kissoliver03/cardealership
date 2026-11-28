@@ -14,7 +14,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import hu.mik.pte.prog5.carmanager.model.Car;
@@ -28,8 +28,7 @@ import java.util.List;
 
 @Route(value = "cars/new", layout = MainLayout.class)
 @RouteAlias(value = "cars/:id/edit", layout = MainLayout.class)
-@PageTitle("Autó szerkesztése | Car Manager")
-public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
+public class CarFormView extends VerticalLayout implements BeforeEnterObserver, HasDynamicTitle {
 
     private final CarService carService;
     private final CategoryRepository categoryRepository;
@@ -37,12 +36,12 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
     private final BeanValidationBinder<Car> binder = new BeanValidationBinder<>(Car.class);
     private Car car;
 
-    private final H3 title = new H3("Autó adatainak megadása");
-    private final TextField licensePlate = new TextField("Rendszám (pl. ABC-123)");
-    private final TextField carManufacturer = new TextField("Gyártó (pl. Toyota)");
-    private final TextField carModel = new TextField("Modell (pl. Corolla)");
-    private final ComboBox<Category> categoryBox = new ComboBox<>("Kategória");
-    private final IntegerField mileage = new IntegerField("Futásteljesítmény (km)");
+    private final H3 title = new H3();
+    private final TextField licensePlate = new TextField();
+    private final TextField carManufacturer = new TextField();
+    private final TextField carModel = new TextField();
+    private final ComboBox<Category> categoryBox = new ComboBox<>();
+    private final IntegerField mileage = new IntegerField();
     private final Select<CarStatus> statusSelect = new Select<>();
 
     public CarFormView(CarService carService, CategoryRepository categoryRepository) {
@@ -52,27 +51,29 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
         this.setMaxWidth("600px");
         this.getStyle().set("margin", "0 auto");
 
-        // Kategóriák betöltése a legördülőbe
+        licensePlate.setLabel(getTranslation("car.form.licensePlate"));
+        carManufacturer.setLabel(getTranslation("car.form.make"));
+        carModel.setLabel(getTranslation("car.form.model"));
+        categoryBox.setLabel(getTranslation("car.form.category"));
+        mileage.setLabel(getTranslation("car.form.mileage"));
+        statusSelect.setLabel(getTranslation("car.form.status"));
+
         List<Category> categories = categoryRepository.findAll();
         categoryBox.setItems(categories);
         categoryBox.setItemLabelGenerator(cat -> cat.getCategoryName() + " (" + cat.getDailyFee() + " Ft/nap)");
 
-        // Státusz legördülő
-        statusSelect.setLabel("Státusz");
         statusSelect.setItems(CarStatus.values());
-        statusSelect.setItemLabelGenerator(CarStatus::getDisplayName);
+        statusSelect.setItemLabelGenerator(status -> getTranslation("status." + status.name()));
         statusSelect.setValue(CarStatus.AVAILABLE);
 
-        // Kétirányú adatkapcsolat (Binder)
         binder.forField(licensePlate).bind("licensePlate");
         binder.forField(carManufacturer).bind("carManufacturer");
         binder.forField(carModel).bind("carModel");
         binder.forField(mileage).bind("mileage");
         binder.forField(statusSelect).bind("status");
 
-        // Közvetlen összekapcsolás a Category entitással
         binder.forField(categoryBox)
-                .asRequired("A kategória kiválasztása kötelező!")
+                .asRequired(getTranslation("car.form.category.required"))
                 .bind(Car::getCategory, Car::setCategory);
 
         FormLayout formLayout = new FormLayout(
@@ -84,10 +85,10 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
                 statusSelect
         );
 
-        Button saveButton = new Button("Mentés", e -> this.save());
+        Button saveButton = new Button(getTranslation("car.form.save"), e -> this.save());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        Button cancelButton = new Button("Mégse", e -> UI.getCurrent().navigate(CarListView.class));
+        Button cancelButton = new Button(getTranslation("car.form.cancel"), e -> UI.getCurrent().navigate(CarListView.class));
 
         HorizontalLayout buttons = new HorizontalLayout(saveButton, cancelButton);
 
@@ -103,9 +104,9 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
         this.binder.readBean(this.car);
 
         if (this.car.getCarId() == null) {
-            this.title.setText("Új autó hozzáadása");
+            this.title.setText(getTranslation("car.form.new.title"));
         } else {
-            this.title.setText("Autó szerkesztése: " + this.car.getLicensePlate());
+            this.title.setText(getTranslation("car.form.edit.title", this.car.getLicensePlate()));
         }
     }
 
@@ -114,5 +115,13 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
             this.carService.save(this.car);
             UI.getCurrent().navigate(CarListView.class);
         }
+    }
+
+    @Override
+    public String getPageTitle() {
+        if (this.car == null || this.car.getCarId() == null) {
+            return getTranslation("car.form.new.title") + " | Car Manager";
+        }
+        return getTranslation("car.form.edit.title", this.car.getLicensePlate()) + " | Car Manager";
     }
 }

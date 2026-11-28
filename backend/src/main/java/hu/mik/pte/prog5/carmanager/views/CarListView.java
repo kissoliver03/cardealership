@@ -9,7 +9,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import hu.mik.pte.prog5.carmanager.model.Car;
@@ -19,8 +19,7 @@ import hu.mik.pte.prog5.carmanager.views.layout.MainLayout;
 
 @Route(value = "cars", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
-@PageTitle("Autók listája | Car Manager")
-public class CarListView extends VerticalLayout {
+public class CarListView extends VerticalLayout implements HasDynamicTitle {
 
     private final CarService carService;
     private final Grid<Car> grid = new Grid<>(Car.class, false);
@@ -31,9 +30,9 @@ public class CarListView extends VerticalLayout {
         this.setSizeFull();
         this.setPadding(false);
 
-        H3 viewTitle = new H3("Flotta kezelése (PostgreSQL adatbázisból)");
+        H3 viewTitle = new H3(getTranslation("car.list.title"));
 
-        Button newCarButton = new Button("➕ Új autó felvétele", e -> UI.getCurrent().navigate(CarFormView.class));
+        Button newCarButton = new Button(getTranslation("car.list.add"), e -> UI.getCurrent().navigate(CarFormView.class));
         newCarButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         HorizontalLayout topBar = new HorizontalLayout(viewTitle, newCarButton);
@@ -41,43 +40,42 @@ public class CarListView extends VerticalLayout {
         topBar.setAlignItems(Alignment.CENTER);
         topBar.expand(viewTitle);
 
-        // Oszlopok beállítása
         this.grid.addColumn(Car::getLicensePlate)
-                .setHeader("Rendszám")
+                .setHeader(getTranslation("car.licensePlate"))
                 .setAutoWidth(true);
 
         this.grid.addColumn(car -> car.getCarManufacturer() + " " + car.getCarModel())
-                .setHeader("Gyártó & Modell")
+                .setHeader(getTranslation("car.makeModel"))
                 .setAutoWidth(true);
 
         this.grid.addColumn(Car::getCategoryName)
-                .setHeader("Kategória")
+                .setHeader(getTranslation("car.category"))
                 .setAutoWidth(true);
 
         this.grid.addColumn(car -> car.getDailyFee() != null ? car.getDailyFee() + " Ft" : "-")
-                .setHeader("Napi díj")
+                .setHeader(getTranslation("car.dailyFee"))
                 .setAutoWidth(true);
 
         this.grid.addColumn(car -> String.format("%,d km", car.getMileage()))
-                .setHeader("Futásteljesítmény")
+                .setHeader(getTranslation("car.mileage"))
                 .setAutoWidth(true);
 
         this.grid.addComponentColumn(this::createStatusBadge)
-                .setHeader("Státusz")
+                .setHeader(getTranslation("car.status"))
                 .setAutoWidth(true);
 
         this.grid.addComponentColumn(this::createActions)
-                .setHeader("Műveletek")
+                .setHeader(getTranslation("car.actions"))
                 .setAutoWidth(true);
 
-        this.grid.setEmptyStateText("Nincsenek elérhető autók az adatbázisban.");
+        this.grid.setEmptyStateText(getTranslation("car.list.empty"));
 
         this.add(topBar, this.grid);
         this.refresh();
     }
 
     private Span createStatusBadge(Car car) {
-        Span badge = new Span(car.getStatus().getDisplayName());
+        Span badge = new Span(getTranslation("status." + car.getStatus().name()));
         badge.getElement().getThemeList().add("badge");
 
         if (car.getStatus() == CarStatus.AVAILABLE) {
@@ -93,17 +91,17 @@ public class CarListView extends VerticalLayout {
     }
 
     private HorizontalLayout createActions(Car car) {
-        Button editButton = new Button("Szerkesztés", e -> UI.getCurrent().navigate("cars/" + car.getCarId() + "/edit"));
+        Button editButton = new Button(getTranslation("car.edit"), e -> UI.getCurrent().navigate("cars/" + car.getCarId() + "/edit"));
         editButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
-        Button deleteButton = new Button("Törlés", e -> {
+        Button deleteButton = new Button(getTranslation("car.delete"), e -> {
             ConfirmDialog dialog = new ConfirmDialog();
-            dialog.setHeader("Autó törlése");
-            dialog.setText("Biztosan törölni szeretnéd a(z) " + car.getLicensePlate() + " rendszámú autót?");
+            dialog.setHeader(getTranslation("car.delete.header"));
+            dialog.setText(getTranslation("car.delete.confirm", car.getLicensePlate()));
 
             dialog.setCancelable(true);
-            dialog.setCancelText("Mégse");
-            dialog.setConfirmText("Törlés");
+            dialog.setCancelText(getTranslation("car.cancel"));
+            dialog.setConfirmText(getTranslation("car.delete"));
             dialog.setConfirmButtonTheme("error primary");
 
             dialog.addConfirmListener(ev -> {
@@ -120,5 +118,10 @@ public class CarListView extends VerticalLayout {
 
     private void refresh() {
         this.grid.setItems(this.carService.list());
+    }
+
+    @Override
+    public String getPageTitle() {
+        return getTranslation("car.list.title") + " | Car Manager";
     }
 }
