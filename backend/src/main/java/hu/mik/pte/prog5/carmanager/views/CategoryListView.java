@@ -11,17 +11,22 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import hu.mik.pte.prog5.carmanager.model.Category;
 import hu.mik.pte.prog5.carmanager.service.CategoryService;
 import hu.mik.pte.prog5.carmanager.views.layout.MainLayout;
 
+import java.util.List;
+
 @Route(value = "categories", layout = MainLayout.class)
 public class CategoryListView extends VerticalLayout implements HasDynamicTitle {
 
     private final CategoryService categoryService;
     private final Grid<Category> grid = new Grid<>(Category.class, false);
+
+    private final TextField searchField = new TextField();
 
     public CategoryListView(CategoryService categoryService) {
         this.categoryService = categoryService;
@@ -38,6 +43,18 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
         topBar.setWidthFull();
         topBar.setAlignItems(Alignment.CENTER);
         topBar.expand(viewTitle);
+
+        this.searchField.setPlaceholder(getTranslation("category.filter.searchPlaceholder"));
+        this.searchField.setClearButtonVisible(true);
+        this.searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        this.searchField.addValueChangeListener(e -> this.applyFilters());
+
+        Button resetButton = new Button(getTranslation("filter.reset"), e -> this.resetFilters());
+
+        HorizontalLayout filterBar = new HorizontalLayout(this.searchField, resetButton);
+        filterBar.setWidthFull();
+        filterBar.setAlignItems(Alignment.CENTER);
+        filterBar.expand(this.searchField);
 
         this.grid.addColumn(Category::getCategoryId)
                 .setHeader(getTranslation("category.id"))
@@ -58,8 +75,8 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
 
         this.grid.setEmptyStateText(getTranslation("category.list.empty"));
 
-        this.add(topBar, this.grid);
-        this.refresh();
+        this.add(topBar, filterBar, this.grid);
+        this.applyFilters();
     }
 
     private HorizontalLayout createActions(Category category) {
@@ -97,7 +114,7 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
         Button saveButton = new Button(getTranslation("category.save"), e -> {
             if (binder.writeBeanIfValid(category)) {
                 this.categoryService.save(category);
-                this.refresh();
+                this.applyFilters();
                 dialog.close();
                 Notification.show(getTranslation("category.saved"));
             }
@@ -110,8 +127,21 @@ public class CategoryListView extends VerticalLayout implements HasDynamicTitle 
         dialog.open();
     }
 
-    private void refresh() {
-        this.grid.setItems(this.categoryService.list());
+    private void applyFilters() {
+        String query = this.searchField.getValue() != null ? this.searchField.getValue().trim().toLowerCase() : "";
+
+        List<Category> filtered = this.categoryService.list().stream()
+                .filter(c -> query.isEmpty() ||
+                        (c.getCategoryName() != null && c.getCategoryName().toLowerCase().contains(query)) ||
+                        formatCategoryName(c).toLowerCase().contains(query))
+                .toList();
+
+        this.grid.setItems(filtered);
+    }
+
+    private void resetFilters() {
+        this.searchField.clear();
+        this.applyFilters();
     }
 
     private String formatCategoryName(Category category) {

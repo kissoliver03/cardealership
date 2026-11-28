@@ -35,6 +35,10 @@ public class RentalService {
         return rentalRepository.findAllByOrderByFromDateDesc();
     }
 
+    public List<Rental> list() {
+        return listAll();
+    }
+
     public List<Rental> listActive() {
         return rentalRepository.findByReturnDateIsNullOrderByFromDateDesc();
     }

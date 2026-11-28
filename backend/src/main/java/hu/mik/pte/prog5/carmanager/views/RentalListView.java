@@ -8,6 +8,9 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import hu.mik.pte.prog5.carmanager.model.Rental;
@@ -15,12 +18,16 @@ import hu.mik.pte.prog5.carmanager.service.RentalService;
 import hu.mik.pte.prog5.carmanager.views.layout.MainLayout;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Route(value = "rentals", layout = MainLayout.class)
 public class RentalListView extends VerticalLayout implements HasDynamicTitle {
 
     private final RentalService rentalService;
     private final Grid<Rental> grid = new Grid<>(Rental.class, false);
+
+    private final TextField searchField = new TextField();
+    private final Select<String> statusFilter = new Select<>();
 
     public RentalListView(RentalService rentalService) {
         this.rentalService = rentalService;
@@ -33,6 +40,33 @@ public class RentalListView extends VerticalLayout implements HasDynamicTitle {
         HorizontalLayout topBar = new HorizontalLayout(viewTitle);
         topBar.setWidthFull();
         topBar.setAlignItems(Alignment.CENTER);
+
+        this.searchField.setPlaceholder(getTranslation("rental.filter.searchPlaceholder"));
+        this.searchField.setClearButtonVisible(true);
+        this.searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        this.searchField.addValueChangeListener(e -> this.applyFilters());
+
+        this.statusFilter.setPlaceholder(getTranslation("rental.filter.allStatus"));
+        this.statusFilter.setEmptySelectionAllowed(true);
+        this.statusFilter.setEmptySelectionCaption(getTranslation("rental.filter.allStatus"));
+        this.statusFilter.setItems("ACTIVE", "CLOSED");
+        this.statusFilter.setItemLabelGenerator(s -> {
+            if ("ACTIVE".equals(s)) {
+                return getTranslation("rental.status.active");
+            } else if ("CLOSED".equals(s)) {
+                return getTranslation("rental.status.closed");
+            }
+            return getTranslation("rental.filter.allStatus");
+        });
+        this.statusFilter.setWidth("180px");
+        this.statusFilter.addValueChangeListener(e -> this.applyFilters());
+
+        Button resetButton = new Button(getTranslation("filter.reset"), e -> this.resetFilters());
+
+        HorizontalLayout filterBar = new HorizontalLayout(this.searchField, this.statusFilter, resetButton);
+        filterBar.setWidthFull();
+        filterBar.setAlignItems(Alignment.CENTER);
+        filterBar.expand(this.searchField);
 
         this.grid.addColumn(rental -> {
             String name = rental.getCustomer().getFullName();
@@ -67,8 +101,8 @@ public class RentalListView extends VerticalLayout implements HasDynamicTitle {
 
         this.grid.setEmptyStateText(getTranslation("rental.empty"));
 
-        this.add(topBar, this.grid);
-        this.refresh();
+        this.add(topBar, filterBar, this.grid);
+        this.applyFilters();
     }
 
     private Span createStatusBadge(Rental rental) {
@@ -84,35 +118,61 @@ public class RentalListView extends VerticalLayout implements HasDynamicTitle {
     }
 
     private HorizontalLayout createActions(Rental rental) {
-        HorizontalLayout actions = new HorizontalLayout();
-
-        if (rental.getReturnDate() == null) {
-            Button returnButton = new Button(getTranslation("rental.returnButton"), e -> {
-                ConfirmDialog dialog = new ConfirmDialog();
-                dialog.setHeader(getTranslation("rental.return.dialog.header"));
-                dialog.setText(getTranslation("rental.return.dialog.text", rental.getCar().getLicensePlate()));
-
-                dialog.setCancelable(true);
-                dialog.setCancelText(getTranslation("car.cancel"));
-                dialog.setConfirmText(getTranslation("rental.return.dialog.confirm"));
-                dialog.setConfirmButtonTheme("primary");
-
-                dialog.addConfirmListener(ev -> {
-                    this.rentalService.returnCar(rental.getCar().getCarId(), LocalDate.now());
-                    this.refresh();
-                });
-
-                dialog.open();
-            });
-            returnButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-            actions.add(returnButton);
+        if (rental.getReturnDate() != null) {
+            return new HorizontalLayout();
         }
 
-        return actions;
+        Button returnButton = new Button(getTranslation("rental.returnButton"), e -> {
+            ConfirmDialog dialog = new ConfirmDialog();
+            dialog.setHeader(getTranslation("rental.return.dialog.header"));
+            dialog.setText(getTranslation("rental.return.dialog.text", rental.getCar().getLicensePlate()));
+
+            dialog.setCancelable(true);
+            dialog.setCancelText(getTranslation("car.cancel"));
+            dialog.setConfirmText(getTranslation("rental.return.dialog.confirm"));
+            dialog.setConfirmButtonTheme("primary");
+
+            dialog.addConfirmListener(ev -> {
+                this.rentalService.returnCar(rental.getRentalId(), LocalDate.now());
+                this.applyFilters();
+            });
+
+            dialog.open();
+        });
+        returnButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+
+        return new HorizontalLayout(returnButton);
     }
 
-    private void refresh() {
-        this.grid.setItems(this.rentalService.listAll());
+    private void applyFilters() {
+        String query = this.searchField.getValue() != null ? this.searchField.getValue().trim().toLowerCase() : "";
+        String status = this.statusFilter.getValue();
+
+        List<Rental> filtered = this.rentalService.list().stream()
+                .filter(r -> query.isEmpty() ||
+                        (r.getCustomer() != null && r.getCustomer().getFullName().toLowerCase().contains(query)) ||
+                        (r.getCar() != null && (
+                                (r.getCar().getLicensePlate() != null && r.getCar().getLicensePlate().toLowerCase().contains(query)) ||
+                                (r.getCar().getCarManufacturer() != null && r.getCar().getCarManufacturer().toLowerCase().contains(query)) ||
+                                (r.getCar().getCarModel() != null && r.getCar().getCarModel().toLowerCase().contains(query))
+                        )))
+                .filter(r -> {
+                    if ("ACTIVE".equals(status)) {
+                        return r.getReturnDate() == null;
+                    } else if ("CLOSED".equals(status)) {
+                        return r.getReturnDate() != null;
+                    }
+                    return true;
+                })
+                .toList();
+
+        this.grid.setItems(filtered);
+    }
+
+    private void resetFilters() {
+        this.searchField.clear();
+        this.statusFilter.clear();
+        this.applyFilters();
     }
 
     @Override
