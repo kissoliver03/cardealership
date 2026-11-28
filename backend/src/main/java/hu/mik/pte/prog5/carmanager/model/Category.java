@@ -1,19 +1,27 @@
 package hu.mik.pte.prog5.carmanager.model;
 
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "category")
 public class Category {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private Long categoryId;
 
     @NotBlank(message = "A kategória neve nem lehet üres!")
+    @Column(name = "category_name", nullable = false, length = 100)
     private String categoryName;
 
     @NotNull(message = "A napi díj megadása kötelező!")
     @Positive(message = "A napi díjnak pozitívnak kell lennie!")
+    @Column(name = "daily_fee", nullable = false, precision = 10, scale = 2)
     private BigDecimal dailyFee;
 
     public Category() {

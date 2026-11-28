@@ -17,15 +17,15 @@ class CarServiceTest {
     private CarService carService;
 
     @Test
-    void testListCarsFromDatabase() {
+    void testListCarsFromDatabaseWithJpa() {
         List<Car> cars = carService.list();
-        System.out.println("=== ADATBÁZISBÓL BEOLVASOTT AUTÓK ===");
+        System.out.println("=== JPA ÁLTAL BEOLVASOTT AUTÓK ===");
         cars.forEach(car -> System.out.println(
                 car.getCarId() + ": " + car.getCarManufacturer() + " " + car.getCarModel() +
                 " [" + car.getLicensePlate() + "] - " + car.getStatus() +
                 " | Kategória: " + car.getCategoryName() + " (" + car.getDailyFee() + " Ft/nap)"
         ));
-        System.out.println("=====================================");
+        System.out.println("==================================");
 
         assertFalse(cars.isEmpty(), "Az adatbázisnak tartalmaznia kell autókat!");
     }

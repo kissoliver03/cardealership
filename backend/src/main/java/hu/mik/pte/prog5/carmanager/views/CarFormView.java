@@ -70,20 +70,10 @@ public class CarFormView extends VerticalLayout implements BeforeEnterObserver {
         binder.forField(mileage).bind("mileage");
         binder.forField(statusSelect).bind("status");
 
-        // Egyedi összekapcsolás a kategóriával (Category.categoryId -> Car.categoryId)
+        // Közvetlen összekapcsolás a Category entitással
         binder.forField(categoryBox)
                 .asRequired("A kategória kiválasztása kötelező!")
-                .bind(
-                        carObj -> categories.stream()
-                                .filter(c -> c.getCategoryId().equals(carObj.getCategoryId()))
-                                .findFirst()
-                                .orElse(null),
-                        (carObj, selectedCategory) -> {
-                            if (selectedCategory != null) {
-                                carObj.setCategoryId(selectedCategory.getCategoryId());
-                            }
-                        }
-                );
+                .bind(Car::getCategory, Car::setCategory);
 
         FormLayout formLayout = new FormLayout(
                 licensePlate,

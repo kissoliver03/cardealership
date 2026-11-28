@@ -1,42 +1,53 @@
 package hu.mik.pte.prog5.carmanager.model;
 
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "car")
 public class Car {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "car_id")
     private Long carId;
 
     @NotBlank(message = "A rendszám nem lehet üres!")
+    @Column(name = "license_plate", unique = true, nullable = false, length = 40)
     private String licensePlate;
 
     @NotNull(message = "Kategória kiválasztása kötelező!")
-    private Long categoryId;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @NotBlank(message = "A gyártó nem lehet üres!")
+    @Column(name = "car_manufacturer", nullable = false, length = 100)
     private String carManufacturer;
 
     @NotBlank(message = "A modell nem lehet üres!")
+    @Column(name = "car_model", nullable = false, length = 100)
     private String carModel;
 
     @NotNull(message = "A km óra állás kötelező!")
     @Min(value = 0, message = "A futásteljesítmény nem lehet negatív!")
+    @Column(name = "mileage")
     private Integer mileage = 0;
 
     @NotNull(message = "A státusz kötelező!")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 40)
     private CarStatus status = CarStatus.AVAILABLE;
-
-    private String categoryName;
-    private BigDecimal dailyFee;
 
     public Car() {
     }
 
-    public Car(String licensePlate, Long categoryId, String carManufacturer, String carModel, Integer mileage, CarStatus status) {
+    public Car(String licensePlate, Category category, String carManufacturer, String carModel, Integer mileage, CarStatus status) {
         this.licensePlate = licensePlate;
-        this.categoryId = categoryId;
+        this.category = category;
         this.carManufacturer = carManufacturer;
         this.carModel = carModel;
         this.mileage = mileage;
@@ -59,12 +70,12 @@ public class Car {
         this.licensePlate = licensePlate;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public String getCarManufacturer() {
@@ -99,20 +110,13 @@ public class Car {
         this.status = status;
     }
 
+    // Kényelmi getterek a Vaadin Gridhez és REST DTO-khoz
     public String getCategoryName() {
-        return categoryName;
-    }
-
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+        return category != null ? category.getCategoryName() : "";
     }
 
     public BigDecimal getDailyFee() {
-        return dailyFee;
-    }
-
-    public void setDailyFee(BigDecimal dailyFee) {
-        this.dailyFee = dailyFee;
+        return category != null ? category.getDailyFee() : BigDecimal.ZERO;
     }
 
     @Override
