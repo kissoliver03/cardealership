@@ -12,6 +12,7 @@ import com.vaadin.flow.router.RouterLayout;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.VaadinSession;
 import hu.mik.pte.prog5.carmanager.views.CarListView;
+import hu.mik.pte.prog5.carmanager.views.RentalListView;
 
 import java.util.Locale;
 
@@ -33,6 +34,19 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
         H2 title = new H2(new RouterLink(getTranslation("app.title"), CarListView.class));
         title.getStyle().set("margin", "0");
 
+        RouterLink carsLink = new RouterLink(getTranslation("nav.cars"), CarListView.class);
+        carsLink.getStyle().set("font-weight", "500").set("text-decoration", "none").set("color", "inherit");
+
+        RouterLink rentalsLink = new RouterLink(getTranslation("nav.rentals"), RentalListView.class);
+        rentalsLink.getStyle().set("font-weight", "500").set("text-decoration", "none").set("color", "inherit");
+
+        HorizontalLayout navigation = new HorizontalLayout(carsLink, rentalsLink);
+        navigation.setSpacing(true);
+        navigation.getStyle().set("margin-left", "2rem");
+
+        HorizontalLayout leftSection = new HorizontalLayout(title, navigation);
+        leftSection.setAlignItems(Alignment.CENTER);
+
         Select<Locale> language = new Select<>();
         language.setItems(Locale.of("hu"), Locale.of("en"));
         language.setItemLabelGenerator(l -> l.getLanguage().equalsIgnoreCase("hu") ? "Magyar" : "English");
@@ -52,10 +66,10 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
             }
         });
 
-        HorizontalLayout bar = new HorizontalLayout(title, language);
+        HorizontalLayout bar = new HorizontalLayout(leftSection, language);
         bar.setWidthFull();
         bar.setAlignItems(Alignment.CENTER);
-        bar.expand(title);
+        bar.expand(leftSection);
         bar.getStyle().set("padding", "1rem 0");
         bar.getStyle().set("border-bottom", "1px solid #e0e0e0");
 
