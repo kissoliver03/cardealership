@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
@@ -23,6 +24,7 @@ public class CarListView extends VerticalLayout implements HasDynamicTitle {
 
     private final CarService carService;
     private final Grid<Car> grid = new Grid<>(Car.class, false);
+    private final Select<CarStatus> statusFilter = new Select<>();
 
     public CarListView(CarService carService) {
         this.carService = carService;
@@ -32,10 +34,18 @@ public class CarListView extends VerticalLayout implements HasDynamicTitle {
 
         H3 viewTitle = new H3(getTranslation("car.list.title"));
 
+        this.statusFilter.setPlaceholder(getTranslation("car.filter.allStatus"));
+        this.statusFilter.setEmptySelectionAllowed(true);
+        this.statusFilter.setEmptySelectionCaption(getTranslation("car.filter.allStatus"));
+        this.statusFilter.setItems(CarStatus.values());
+        this.statusFilter.setItemLabelGenerator(status -> status != null ? getTranslation("status." + status.name()) : getTranslation("car.filter.allStatus"));
+        this.statusFilter.setWidth("200px");
+        this.statusFilter.addValueChangeListener(e -> this.refresh(e.getValue()));
+
         Button newCarButton = new Button(getTranslation("car.list.add"), e -> UI.getCurrent().navigate(CarFormView.class));
         newCarButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        HorizontalLayout topBar = new HorizontalLayout(viewTitle, newCarButton);
+        HorizontalLayout topBar = new HorizontalLayout(viewTitle, this.statusFilter, newCarButton);
         topBar.setWidthFull();
         topBar.setAlignItems(Alignment.CENTER);
         topBar.expand(viewTitle);
@@ -116,8 +126,12 @@ public class CarListView extends VerticalLayout implements HasDynamicTitle {
         return new HorizontalLayout(editButton, deleteButton);
     }
 
+    private void refresh(CarStatus status) {
+        this.grid.setItems(this.carService.listByStatus(status));
+    }
+
     private void refresh() {
-        this.grid.setItems(this.carService.list());
+        this.refresh(this.statusFilter.getValue());
     }
 
     private String formatCategoryName(Car car) {

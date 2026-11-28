@@ -26,6 +26,13 @@ public class CarService {
         return carRepository.findByStatus(CarStatus.AVAILABLE);
     }
 
+    public List<Car> listByStatus(CarStatus status) {
+        if (status == null) {
+            return carRepository.findAll();
+        }
+        return carRepository.findByStatus(status);
+    }
+
     public List<Car> listByCategory(Long categoryId) {
         return carRepository.findByCategoryCategoryId(categoryId);
     }
